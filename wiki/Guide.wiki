@@ -2,7 +2,7 @@
 
 = Introduction =
 
-Add your content here.
+This is meant to be a simple project demonstrating how to create a Spring service, running in an http container, using Apache Avro to handle requests and responses.
 
 
 = Details =
