@@ -1,0 +1,109 @@
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="tanzaniabusservice" default="dist">
+    <property name="lib.home" value="${user.home}/.ant/lib"/>
+    <property name="src" value="src"/>
+    <property name="lib" value="lib"/>
+    <property name="clib" value="clib"/>
+    <property name="web" value="web"/>
+    <property name="webxml" value="${web}/WEB-INF/web.xml"/>
+    <property name="resources" value="resources"/>
+    <property name="props" value="properties"/>
+
+    <property name="avro-gen" value="avro-gen-java"/>
+    <property name="build" value="build"/>
+    <property name="dist" value="dist"/>
+    <property name="jar" value="tanzaniabusservice.jar"/>
+    <property name="jarFile" value="${dist}/${jar}"/>
+
+    <property name="clientJar" value="tanzaniabusservice-client.jar"/>
+    <property name="clientJarFile" value="${dist}/${clientJar}"/>
+
+    <property name="war" value="tanzaniabusservice.war"/>
+    <property name="warFile" value="${dist}/${war}"/>
+
+    <property name="ivy.version" value="2.1.0-rc2"/>
+    <property name="ivy.url" value="http://repo2.maven.org/maven2/org/apache/ivy/ivy"/>
+    <property name="ivy.home" value="${user.home}/.ant"/>
+    <property name="ivy.lib" value="${build}/lib"/>
+
+    <target name="resolve" description="fetch deps">
+        <ivy:retrieve pattern="${lib}/[artifact]-[revision].[ext]" conf="runtime"/>
+        <ivy:retrieve pattern="${clib}/[artifact]-[revision].[ext]" conf="compile"/>
+    </target>
+
+    <target name="rebuild-avro-gen" depends="clean-avro-gen" description="Rebuild avro classes">
+        <taskdef name="protocol" classname="org.apache.avro.compiler.specific.ProtocolTask">
+            <classpath refid="classpath"/>
+        </taskdef>
+
+        <taskdef name="schema" classname="org.apache.avro.compiler.specific.SchemaTask">
+            <classpath refid="classpath"/>
+        </taskdef>
+
+        <protocol destdir="${avro-gen}">
+            <fileset dir="${basedir}">
+                <include name="**/*.avpr"/>
+            </fileset>
+        </protocol>
+
+        <schema destdir="${avro-gen}">
+            <fileset dir="${basedir}">
+                <include name="**/*.avsc"/>
+            </fileset>
+        </schema>
+    </target>
+
+    <target name="init" depends="resolve">
+        <mkdir dir="${build}"/>
+        <mkdir dir="${dist}"/>
+        <mkdir dir="${lib}"/>
+        <mkdir dir="${clib}"/>
+        <mkdir dir="${avro-gen}"/>
+    </target>
+
+    <fileset id="runtime-classpath" dir="${lib}" includes="**"/>
+    <fileset id="compile-classpath" dir="${clib}" includes="**"/>
+
+    <path id="classpath">
+        <fileset refid="runtime-classpath"/>
+        <fileset refid="compile-classpath"/>
+    </path>
+
+    <target name="compile" depends="init,rebuild-avro-gen" description="compile the code">
+        <javac classpathref="classpath" srcdir="${avro-gen}" destdir="${build}" debug="true" target="1.6"/>
+        <javac classpathref="classpath" srcdir="${src}" destdir="${build}" debug="true" target="1.6"/>
+    </target>
+
+    <target name="jar" depends="compile" description="make jar file for clients to use">
+        <jar file="${jarFile}" basedir="${build}" includes="**"/>
+        <jar file="${clientJarFile}" basedir="${build}">
+            <include name="com/tanzaniabusservice/client/**"/>
+        </jar>
+    </target>
+
+    <target name="war" depends="jar" description="make webapp to deploy">
+        <war basedir="${web}" webxml="${webxml}" file="${warFile}">
+            <include name="**"/>
+            <lib refid="runtime-classpath"/>
+            <lib dir="${dist}" includes="${jar}"/>
+            <classes dir="${props}" includes="**"/>
+        </war>
+    </target>
+
+    <target name="dist" depends="clean-artifacts,war"/>
+
+    <target name="clean-avro-gen">
+        <delete dir="${avro-gen}"/>
+    </target>
+
+    <target name="clean-artifacts" depends="clean-avro-gen">
+        <delete dir="${build}"/>
+        <delete dir="${dist}"/>
+    </target>
+
+    <target name="clean" depends="clean-artifacts, clean-avro-gen"
+            description="clean up the build mess">
+        <delete dir="${lib}"/>
+        <delete dir="${clib}"/>
+    </target>
+
+</project>

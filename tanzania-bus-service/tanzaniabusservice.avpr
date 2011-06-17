@@ -1,0 +1,26 @@
+{"namespace": "com.tanzaniabusservice",
+ "protocol": "BusService",
+
+ "types": [
+     {"name": "Company", "type": "record",
+      "fields": [
+          {"name": "id",   "type": "long"},
+          {"name": "name",   "type": "string"},
+          {"name": "rating", "type": "float"},
+          {"name": "establishedDateMills", "type": "long"}
+      ]
+     }
+ ],
+
+ "messages": {
+     "loadCompany": {
+         "request": [{"name": "companyId", "type": "long"}],
+         "response": ["Company", "null"]
+     },
+
+     "listCompaniesAboveRating": {
+         "request": [{"name": "rating", "type": "float"}],
+         "response": {"type": "array", "items": "Company"}
+     }
+ }
+}
